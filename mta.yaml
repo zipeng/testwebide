@@ -1,0 +1,50 @@
+_schema-version: 2.0.0
+ID: test1
+version: 1.0.0
+modules:
+  - name: test1-db
+    type: hdb
+    path: db
+    parameters:
+      memory: 256M
+      disk-quota: 256M
+    requires:
+      - name: test1-hdi-container
+        properties: {}
+  - name: test1-srv
+    type: java
+    path: srv
+    parameters:
+      memory: 512M
+      disk-quota: 256M
+    provides:
+      - name: srv_api
+        properties:
+          url: '${default-url}'
+    requires:
+      - name: test1-hdi-container
+        properties:
+          JBP_CONFIG_RESOURCE_CONFIGURATION: '[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "~{hdi-container-name}"}]'
+      - name: test1-dest
+      - name: test1-uaa
+    properties:
+      ALLOW_MOCKED_AUTH_HEADER: true
+resources:
+  - name: test1-hdi-container
+    type: com.sap.xs.hdi-container
+    properties:
+      hdi-container-name: '${service-name}'
+  - name: test1-dest
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: destination
+      service-plan: lite
+  - name: test1-uaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      parameters:
+        config:
+          xsappname: test1
+          tenant-mode: dedicated
